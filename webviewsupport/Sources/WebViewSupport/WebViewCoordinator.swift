@@ -11,7 +11,7 @@ public protocol WebViewScriptMessageReceiver: AnyObject {
     func didReceiveScriptMessage(name: String, body: Any, webView: WebViewProxy)
 }
 
-public struct WebViewSetupConfiguration {
+public struct WebViewConfiguration {
     public var initialURL: URL?
     public var cookies: [HTTPCookie]
     public var allowsBackForwardNavigationGestures: Bool
@@ -33,9 +33,10 @@ public struct WebViewSetupConfiguration {
     }
 }
 
-public final class WebViewCoordinator: NSObject, ObservableObject, WebViewProxy {
+public final class WebViewViewModel: NSObject, ObservableObject, WebViewProxy {
     let webView: WKWebView
     private let userContentController: WKUserContentController
+    private let bridgedEventNames: [String]
 
     private final class WeakBox {
         weak var receiver: WebViewScriptMessageReceiver?
@@ -44,13 +45,14 @@ public final class WebViewCoordinator: NSObject, ObservableObject, WebViewProxy 
 
     private var nameToReceiver: [String: WeakBox] = [:]
 
-    public init(configuration: WebViewSetupConfiguration = .init(initialURL: nil)) {
+    public init(configuration: WebViewConfiguration = .init(initialURL: nil)) {
         let config = WKWebViewConfiguration()
         let ucc = WKUserContentController()
         config.userContentController = ucc
         config.defaultWebpagePreferences.allowsContentJavaScript = true
         self.userContentController = ucc
         self.webView = WKWebView(frame: .zero, configuration: config)
+        self.bridgedEventNames = configuration.bridgeDOMEvents
         super.init()
         self.webView.navigationDelegate = self
         self.webView.allowsBackForwardNavigationGestures = configuration.allowsBackForwardNavigationGestures
@@ -112,9 +114,7 @@ public final class WebViewCoordinator: NSObject, ObservableObject, WebViewProxy 
         for key in nameToReceiver.keys {
             userContentController.removeScriptMessageHandler(forName: key)
         }
-        // Remove any handlers registered for bridged events too
-        let registeredNames = userContentController.value(forKey: "_messageHandlerNames") as? [String] ?? []
-        for name in registeredNames {
+        for name in bridgedEventNames {
             userContentController.removeScriptMessageHandler(forName: name)
         }
     }
@@ -165,12 +165,49 @@ public final class WebViewCoordinator: NSObject, ObservableObject, WebViewProxy 
     }
 }
 
-extension WebViewCoordinator: WKNavigationDelegate {}
+extension WebViewViewModel: WKNavigationDelegate {}
 
-extension WebViewCoordinator: WKScriptMessageHandler {
+extension WebViewViewModel: WKScriptMessageHandler {
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         if let receiver = nameToReceiver[message.name]?.receiver {
             receiver.didReceiveScriptMessage(name: message.name, body: message.body, webView: self)
         }
+    }
+}
+
+public final class WebViewCoordinator: ObservableObject, WebViewProxy {
+    private let viewModel: WebViewViewModel
+
+    public init(configuration: WebViewConfiguration) {
+        self.viewModel = WebViewViewModel(configuration: configuration)
+    }
+
+    public func makeView() -> WebView {
+        WebView(viewModel: viewModel)
+    }
+
+    // Pass-through API (maintain abstraction)
+    public func evaluateJavaScript(_ js: String, completion: ((Result<Any?, Error>) -> Void)? = nil) {
+        viewModel.evaluateJavaScript(js, completion: completion)
+    }
+
+    public func sendCustomEvent(name: String, detailJSONObject: Any) {
+        viewModel.sendCustomEvent(name: name, detailJSONObject: detailJSONObject)
+    }
+
+    public func addScriptMessageReceiver(name: String, receiver: WebViewScriptMessageReceiver) {
+        viewModel.addScriptMessageReceiver(name: name, receiver: receiver)
+    }
+
+    public func removeScriptMessageReceiver(name: String) {
+        viewModel.removeScriptMessageReceiver(name: name)
+    }
+
+    public func load(url: URL) {
+        viewModel.load(url: url)
+    }
+
+    public func setCookies(_ cookies: [HTTPCookie], completion: (() -> Void)?) {
+        viewModel.setCookies(cookies, completion: completion)
     }
 }

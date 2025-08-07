@@ -2,12 +2,12 @@
 
 A small abstraction over `WKWebView` providing:
 
-- Coordinator object to manage a shared web view instance
+- Coordinator creates a SwiftUI `WebView` and passes configuration to an internal view model
 - Cookie setup
 - JavaScript message handling via `WKScriptMessageHandler`
 - Bridging DOM CustomEvents to native handlers
 - Native-to-JS event dispatch and arbitrary JS evaluation
-- SwiftUI `WebView` wrapper for easy embedding in views
+- Fully hides `WKWebView` from consumers
 
 ## Usage
 
@@ -27,7 +27,7 @@ struct MyWebScreen: View {
 
     init() {
         let url = URL(string: "https://example.com")!
-        let config = WebViewSetupConfiguration(
+        let config = WebViewConfiguration(
             initialURL: url,
             bridgeDOMEvents: ["fromJsEvent"]
         )
@@ -37,7 +37,12 @@ struct MyWebScreen: View {
     }
 
     var body: some View {
-        WebView(coordinator: coordinator)
+        VStack {
+            coordinator.makeView()
+            Button("Send event") {
+                coordinator.sendCustomEvent(name: "nativeEvent", detailJSONObject: ["foo": "bar"]) 
+            }
+        }
     }
 }
 ```

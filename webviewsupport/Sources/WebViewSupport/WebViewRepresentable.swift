@@ -4,17 +4,17 @@ import WebKit
 public struct WebView: UIViewRepresentable {
     public typealias UIViewType = WKWebView
 
-    private let coordinatorObject: WebViewCoordinator
+    private let viewModel: WebViewViewModel
 
-    public init(coordinator: WebViewCoordinator) {
-        self.coordinatorObject = coordinator
+    public init(viewModel: WebViewViewModel) {
+        self.viewModel = viewModel
     }
 
     public func makeUIView(context: Context) -> WKWebView {
-        coordinatorObject.webView
+        viewModel.webView
     }
 
     public func updateUIView(_ uiView: WKWebView, context: Context) {
-        // Updates are coordinated through the coordinator instance.
+        // Updates are driven through the view model.
     }
 }

@@ -1,9 +1,9 @@
 # FeaturePackage
 
-Demonstrates consuming the `WebViewSupport` package from a feature module.
+Demonstrates consuming the `WebViewSupport` package from a feature module using the coordinator-based API.
 
 - Provides `FeatureWebViewScreen` SwiftUI view as an example.
-- Shows how to register JS message receivers and send native events.
+- Shows how to register JS message receivers and send native events via the coordinator.
 
 ## Integration
 
@@ -22,4 +22,4 @@ Then depend on the product:
 )
 ```
 
-Use the sample view or compose your own with the coordinator.
+Use the coordinator to create the SwiftUI view and interact with the WebView through the abstraction only.

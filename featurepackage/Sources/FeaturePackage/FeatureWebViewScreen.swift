@@ -16,21 +16,21 @@ public struct FeatureWebViewScreen: View {
 
         let cookies: [HTTPCookie] = []
 
-        let config = WebViewSetupConfiguration(
+        let config = WebViewConfiguration(
             initialURL: url,
             cookies: cookies,
             allowsBackForwardNavigationGestures: true,
             customUserScripts: [],
             bridgeDOMEvents: ["fromJsEvent"]
         )
-        let coord = WebViewCoordinator(configuration: config)
-        coord.addScriptMessageReceiver(name: "fromJsEvent", receiver: receiver)
-        _coordinator = StateObject(wrappedValue: coord)
+        let c = WebViewCoordinator(configuration: config)
+        c.addScriptMessageReceiver(name: "fromJsEvent", receiver: receiver)
+        _coordinator = StateObject(wrappedValue: c)
     }
 
     public var body: some View {
         VStack(spacing: 12) {
-            WebView(coordinator: coordinator)
+            coordinator.makeView()
             HStack(spacing: 12) {
                 Button("Send event to JS") {
                     coordinator.sendCustomEvent(name: "nativeEvent", detailJSONObject: ["foo": "bar"]) 
