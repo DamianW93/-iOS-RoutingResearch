@@ -1,20 +1,32 @@
 import SwiftUI
 import WebKit
 
-public struct WebView: UIViewRepresentable {
-    public typealias UIViewType = WKWebView
+struct WebView: UIViewRepresentable {
+    typealias UIViewType = WKWebView
 
     private let viewModel: WebViewViewModel
 
-    public init(viewModel: WebViewViewModel) {
+    init(viewModel: WebViewViewModel) {
         self.viewModel = viewModel
     }
 
-    public func makeUIView(context: Context) -> WKWebView {
+    func makeUIView(context: Context) -> WKWebView {
         viewModel.webView
     }
 
-    public func updateUIView(_ uiView: WKWebView, context: Context) {
+    func updateUIView(_ uiView: WKWebView, context: Context) {
         // Updates are driven through the view model.
+    }
+}
+
+public struct WebViewContainerView: View {
+    @ObservedObject private var coordinator: WebViewCoordinator
+
+    public init(coordinator: WebViewCoordinator) {
+        self.coordinator = coordinator
+    }
+
+    public var body: some View {
+        coordinator.makeView()
     }
 }

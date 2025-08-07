@@ -30,7 +30,7 @@ public struct FeatureWebViewScreen: View {
 
     public var body: some View {
         VStack(spacing: 12) {
-            coordinator.makeView()
+            WebViewContainerView(coordinator: coordinator)
             HStack(spacing: 12) {
                 Button("Send event to JS") {
                     coordinator.sendCustomEvent(name: "nativeEvent", detailJSONObject: ["foo": "bar"]) 
